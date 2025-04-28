@@ -1,6 +1,12 @@
 #include <InSDL.hpp>
 #include <var.hpp>
-#include <cstring>
+#include <physic.hpp>
+#include <check.hpp>
+#include <anim.hpp>
+#include <bind.hpp>
+#include <save.hpp>
+
+using namespace std;
 
 int main()
 {
@@ -10,8 +16,18 @@ int main()
     texture icon(myapp.Render, path+"image/icon.png");
     myapp.setIcon(icon);
 
+    frect logo(0, 0, 500, 100);
+    texture t_lg(myapp.Render, path+"image/CppDodge.png");
+
+    frect menu_background(0, 0, 1200, 600);
+    texture t_mbg(myapp.Render, path+"image/menubg.png");
+
     frect background(0, 0, 1200, 800);
     texture t_bg(myapp.Render, path+"image/bg.png");
+
+    frect button(0, 0, 400, 75);
+    texture t_btn(myapp.Render, path+"image/button.png");
+    texture t_hvbtn(myapp.Render, path+"image/hover_button.png");
 
     frect counter(0, 30, 25, 50);
     text t_ct(myapp.Render, "0", myapp.font);
@@ -19,109 +35,103 @@ int main()
     frect max_counter(0, 70, 25, 50);
     text t_mct(myapp.Render, "0", myapp.font, 158, 228, 255);
 
+    frect dash_state(30, 30, 75, 110);
+    texture t_ds(myapp.Render, path+"image/dash.png");
+    texture t_nods(myapp.Render, path+"image/nodash.png");
+
+    frect lava(0, 0, 1200, 50);
+    texture t_lv(myapp.Render, path+"image/lavahound.png");
+
     frect platform(0, 0, 600, 150);
     texture t_pf(myapp.Render, path+"image/platform.png");
 
     frect player(0, 0, 60, 60);
     texture t_pl(myapp.Render, path+"image/rambo.png");
-    SDL_FPoint point_pl = {player.getWidth()/2, player.getHeight()/2};
 
-    myapp.bindKey(SDL_SCANCODE_A, [&]() { moved_left = true; facing_right = true; });
-    myapp.bindKey(SDL_SCANCODE_D, [&]() { moved_right = true; facing_right = false; });
-    myapp.bindKey(SDL_SCANCODE_W, [&]() { if (!is_jump) jumped = true; });
-    myapp.bindKey(SDL_SCANCODE_SPACE, [&]() { if (!is_jump) jumped = true; });
+    SDL_FPoint point_pl = {
+        static_cast<float>( player.getWidth()/2 ),
+        static_cast<float>( player.getHeight()/2 )
+    };
 
-    myapp.bindKey(SDL_SCANCODE_LSHIFT, [&]() {
-        if (dash_available && !dash_in_progress) {
-            dash_in_progress = true;
-            dash_speed = facing_right ? -30.0f : 30.0f;
-            dash_target_x = player.getX() + (facing_right ? -300 : 300);
-            dash_available = false;
-            dash_cooldown_time = SDL_GetTicks();
-        }
-    });
-
-    myapp.bindKeyUp(SDL_SCANCODE_A, [&]() { moved_left = false; });
-    myapp.bindKeyUp(SDL_SCANCODE_D, [&]() { moved_right = false; });
-    myapp.bindKeyUp(SDL_SCANCODE_W, [&]() { if (is_jump) jumped = false; });
-    myapp.bindKeyUp(SDL_SCANCODE_SPACE, [&]() { if (is_jump) jumped = false; });
+    bind_movement(myapp);
+    bind_button(myapp, button);
 
     int x_pf = (myapp.window.width - platform.getWidth()) / 2;
-    int y_pf = (myapp.window.height - platform.getHeight()) + 75;
+    int y_pf = (myapp.window.height - platform.getHeight());
     platform.setPosition(x_pf, y_pf);
 
     int x_pl = (myapp.window.width - player.getWidth()) / 2;
     int y_pl = (myapp.window.height - platform.getHeight() - player.getHeight());
     player.setPosition(x_pl, y_pl);
 
-    int x_ct = (myapp.window.width - counter.getWidth()) - 100;
+    int x_ct = (myapp.window.width - counter.getWidth()) - 50;
     counter.setX(x_ct);
     max_counter.setX(x_ct);
 
-    unsigned int last_time = SDL_GetTicks();
+    int y_lv = (myapp.window.height - lava.getHeight());
+    lava.setY(y_lv);
+
+    int x_lg = (myapp.window.width - logo.getWidth()) / 2;
+    int y_lg = (myapp.window.height - logo.getHeight()) / 2 - 75;
+    logo.setPosition(x_lg, y_lg);
+
+    int x_btn = (myapp.window.width - button.getWidth()) / 2;
+    int y_btn = (myapp.window.height - button.getHeight()) / 2 + 50;
+    button.setPosition(x_btn, y_btn);
+
+    load(max_count);
 
     while (!myapp.quit) {
         handleEvent(myapp);
 
-        if (moved_left) player.subX(10);
-        if (moved_right) player.addX(10);
+        if (!game){
+            myapp.fill(0, 0, 0);
+            menu_background.fillTexture(myapp.Render, &t_mbg);
+            logo.fillTexture(myapp.Render, &t_lg);
+            button.fillTexture(myapp.Render, button.onHover() ? &t_hvbtn : &t_btn);
+        } else {
+            if (moved_left) 
+                player.subX(10);
+            if (moved_right) 
+                player.addX(10);
 
-        if (jumped && !is_jump) { 
-            jump_speed = jump_force;
-            is_jump = true;
+            handle_jump(player, platform);
+            handle_dash(myapp, player);
+
+            anim_die(player, x_pl, y_pl);
+
+            if (player.onTouch(lava) || check_border(player, myapp)) 
+                die = true;
+
+            cout<<"Player Y: "<<player.getY()<<endl;
+            cout<<"Platform Y: "<<platform.getY()<<endl;
+            cout<<"y_pf Y: "<<y_pf<<endl;
+
+            if (player.getY() > 400 && player.onTouch(platform)) 
+                player.setY(400);
+
+            if (current_count >= max_count) 
+                max_count = current_count;
+            
+            string count_str = to_string(current_count);
+            counter.setWidth(count_str.length() * 25);
+            t_ct.setText(count_str);
+
+            string max_count_str = to_string(max_count);
+            max_counter.setWidth(max_count_str.length() * 25);
+            t_mct.setText(max_count_str);
+
+            myapp.fill(0, 0, 0);
+            background.fillTexture(myapp.Render, &t_bg);
+            counter.fillText(myapp.Render, &t_ct);
+            max_counter.fillText(myapp.Render, &t_mct);
+            dash_state.fillTexture(myapp.Render, dash_available ? &t_ds : &t_nods);
+            platform.fillTexture(myapp.Render, &t_pf);
+            lava.fillTexture(myapp.Render, &t_lv);
+            player.fillTexture(myapp.Render, die ? &icon : &t_pl, moved_left ? -7 : moved_right ? 7 : degr, facing_right ? SDL_FLIP_NONE : SDL_FLIP_HORIZONTAL, point_pl);
         }
-        
-        if (is_jump) {
-            player.addY(jump_speed);
-            jump_speed += gravity * 0.1f;
-        }
-        
-        if (player.onTouch(platform)){
-            is_jump = false;
-            jumped = false;
-            jump_speed = 0;
-        } else
-            player.addY(gravity);
 
-        if (dash_in_progress) {
-            int current_x = player.getX();
-            if ((dash_speed > 0 && current_x < dash_target_x) || (dash_speed < 0 && current_x > dash_target_x)) {
-                player.addX(dash_speed);
-            } else {
-                dash_in_progress = false;
-            }
-        }
-
-        if (player.getY() > myapp.window.height + 500){
-            player.setPosition(x_pl, y_pl);
-            count = 0;
-        }
-
-        if (count >= max_count) max_count = count;
-        
-        unsigned int current_time = SDL_GetTicks();
-        if (current_time - last_time >= 1000) {
-            count++;
-            last_time = current_time;
-        }
-        if (!dash_available && current_time - dash_cooldown_time >= 1500) {
-            dash_available = true;
-        }
-
-        string count_str = to_string(count);
-        counter.setWidth(count_str.length() * 25);
-        t_ct.setText(count_str);
-
-        string max_count_str = to_string(max_count);
-        max_counter.setWidth(max_count_str.length() * 25);
-        t_mct.setText(max_count_str);
-
-        myapp.fill(0, 0, 0);
-        background.fillTexture(myapp.Render, &t_bg);
-        counter.fillText(myapp.Render, &t_ct);
-        max_counter.fillText(myapp.Render, &t_mct);
-        platform.fillTexture(myapp.Render, &t_pf);
-        player.fillTexture(myapp.Render, &t_pl, moved_left ? -7 : moved_right ? 7 : 0, facing_right ? SDL_FLIP_NONE : SDL_FLIP_HORIZONTAL, point_pl);
+        save(max_count);
 
         delayms(1);
         myapp.update();
