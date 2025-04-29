@@ -27,6 +27,7 @@ void anim_die(frect &player, int x, int y){
             die = false;
             player.setPosition(x, y);
             current_count = 0;
+            death_count++;
         }
     }
 }
