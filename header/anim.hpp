@@ -28,6 +28,8 @@ void anim_die(frect &player, int x, int y){
             player.setPosition(x, y);
             current_count = 0;
             death_count++;
+            attack = "";
+            attack_counter = 0;
         }
     }
 }

@@ -28,13 +28,18 @@ int dash_target_x = 0;
 int current_count = 0;
 int max_count = 0;
 int death_count = 0;
+int attack_timer = 0;
+int attack_elapsed = 0;
+int attack_counter = 0;
 
 float dash_speed = 0.0f;
 float jump_speed = 0;
 const float gravity = 10;
 const float jump_force = -30;
 double degr = 0;
+double scp_degr = 0;
 
+string attack = "";
 string path = disk_path()+"\\";
 string name = "СppDodge";
 

@@ -5,6 +5,7 @@
 #include <anim.hpp>
 #include <bind.hpp>
 #include <save.hpp>
+#include <attack.hpp>
 
 using namespace std;
 
@@ -70,6 +71,24 @@ int main()
 
     frect button_pause(10, 10, 60, 60);
     texture t_psbtn(myapp.Render, path+"image/btnPause.png");
+    
+    frect scope(player.getX()-25, player.getY()-25, player.getWidth()+50, player.getHeight()+50);
+    texture t_scp(myapp.Render, path+"image/scope.png");
+    SDL_FPoint point_scp = {
+        static_cast<float>( scope.getWidth()/2 ),
+        static_cast<float>( scope.getHeight()/2 )
+    };
+
+    frect rocket(0, -100, 48, 96);
+    texture t_rkt(myapp.Render, path+"image/rocket.png");
+
+    frect laser_left(0, 0, 0, 0);
+    frect laser_right(0, 0, 0, 0);
+    texture t_ls(myapp.Render, path+"image/laser.png");
+
+    frect warning_left(0, 0, 60, 60);
+    frect warning_right(0, 0, 60, 60);
+    texture t_wrn(myapp.Render, path+"image/warning.png");
 
     int x_pf = (myapp.window.width - platform.getWidth()) / 2;
     int y_pf = (myapp.window.height - platform.getHeight());
@@ -108,12 +127,27 @@ int main()
     int y_rsbtn = (myapp.window.height - button_resume.getHeight()) / 2 - 50;
     button_resume.setPosition(x_rsbtn, y_rsbtn);
     button_quit.setPosition(x_rsbtn, y_rsbtn + 100);
+    
+    int x_rkt = (myapp.window.width - rocket.getWidth()) / 2;
+    rocket.setX(x_rkt);
+
+    int h_ls = (myapp.window.height - platform.getHeight());
+    laser_left.setX(x_pf + 10);
+    laser_right.setX((x_pf + platform.getWidth() - laser_right.getWidth()) - 25);
+
+    int y_wrn = (myapp.window.height - platform.getHeight() - warning_left.getHeight());
+    warning_left.setX(x_pf - 15);
+    warning_right.setX(x_pf + platform.getWidth() - laser_right.getWidth() - 40);
+    warning_left.setY(y_wrn);
+    warning_right.setY(y_wrn);
 
     load(max_count);
 
     bind_movement(myapp);
     bind_button(myapp, button, button_resume, button_quit, button_pause, button_github, player, x_pl, y_pl);
     bind_menu(myapp);
+
+    init_attack_timer();
 
     while (!myapp.quit) {
         handleEvent(myapp);
@@ -125,6 +159,8 @@ int main()
             button.fillTexture(myapp.Render, button.onHover() ? &t_hvbtn : &t_btn);
             button_github.fillTexture(myapp.Render, button_github.onHover() ? &t_hvghbtn : &t_ghbtn);
         } else {
+            scope.setFrect(player.getX()-25, player.getY()-25, player.getWidth()+50, player.getHeight()+50);
+
             myapp.fill(0, 0, 0);
             background.fillTexture(myapp.Render, &t_bg);
             counter.fillText(myapp.Render, &t_ct);
@@ -138,6 +174,18 @@ int main()
                 moved_left ? -5 : moved_right ? 5 : degr, 
                 facing_right ? SDL_FLIP_NONE : SDL_FLIP_HORIZONTAL, point_pl
             );
+            rocket.fillTexture(myapp.Render, &t_rkt);
+            if (attack == "laser"){
+                laser_left.fillTexture(myapp.Render, &t_ls);
+                laser_right.fillTexture(myapp.Render, &t_ls);
+                warning_left.fillTexture(myapp.Render, &t_wrn);
+                warning_right.fillTexture(myapp.Render, &t_wrn);
+            }
+
+            if (attack == "rocket" && attack_counter < 400){
+                scope.fillTexture(myapp.Render, &t_scp, scp_degr, SDL_FLIP_NONE, point_scp);
+                rocket.setX(player.getX());
+            }
 
             if (!pause){
                 if (moved_left) 
@@ -145,12 +193,26 @@ int main()
                 if (moved_right) 
                     player.addX(10);
 
+                random_attack(rocket, x_rkt, laser_left, laser_right, warning_left, warning_right, x_pf, platform.getWidth(), y_wrn, h_ls, (x_pf + platform.getWidth() - laser_right.getWidth()) - 10);
+
                 handle_jump(player, platform);
                 handle_dash(myapp, player);
                 
                 anim_die(player, x_pl, y_pl);
+                if (die) {
+                    laser_left.setX(x_pf + 10);
+                    laser_right.setX((x_pf + platform.getWidth() - laser_right.getWidth()) - 10);
+                    laser_left.setHeight(0);
+                    laser_right.setHeight(0);
+                }
 
-                if (player.onTouch(lava) || check_border(player, myapp)) 
+                if (
+                    player.onTouch(lava) 
+                    || check_border(player, myapp)
+                    || player.onTouch(rocket)
+                    || player.onTouch(laser_left)
+                    || player.onTouch(laser_right)
+                   ) 
                     die = true;
 
                 cout<<"Player Y: "<<player.getY()<<endl;
@@ -170,6 +232,8 @@ int main()
                 string max_count_str = to_string(max_count);
                 max_counter.setWidth(max_count_str.length() * 25);
                 t_mct.setText(max_count_str);
+
+                scp_degr += 6;
             } else {
                 pause_background.fillTexture(myapp.Render, &t_pbg);
                 button_resume.fillTexture(myapp.Render, button_resume.onHover() ? &t_hvrsbtn : &t_rsbtn);

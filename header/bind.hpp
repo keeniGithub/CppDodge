@@ -34,6 +34,8 @@ void bind_button(app &app, frect &play_button, frect &resume_button, frect &quit
         if (!game && play_button.onHover()){
             game = true;
             current_count = -1;
+            attack = "";
+            attack_counter = 0;
             player.setPosition(x, y);
         }
         else if (pause && resume_button.onHover()) {
