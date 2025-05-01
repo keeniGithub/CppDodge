@@ -3,8 +3,9 @@
 
 #include <InSDL.hpp>
 #include <var.hpp>
+#include <game.hpp>
 
-void anim_die(frect &player, int x, int y){
+void anim_die(){
     if (die) {
         playanim = true;
 
@@ -24,12 +25,8 @@ void anim_die(frect &player, int x, int y){
         }
 
         if (!playanim){
-            die = false;
-            player.setPosition(x, y);
-            current_count = 0;
+            reset();
             death_count++;
-            attack = "";
-            attack_counter = 0;
         }
     }
 }

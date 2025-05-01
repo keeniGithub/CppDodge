@@ -4,7 +4,7 @@
 #include <InSDL.hpp>
 #include <var.hpp>
 
-void handle_jump(frect& player, frect& platform) {
+void handle_jump() {
     if (jumped && !is_jump) {
         jump_speed = jump_force;
         is_jump = true;
@@ -24,8 +24,8 @@ void handle_jump(frect& player, frect& platform) {
     }
 }
 
-void handle_dash(app &app, frect &player) {
-    app.bindKey(SDL_SCANCODE_LSHIFT, [&]() {
+void handle_dash() {
+    myapp.bindKey(SDL_SCANCODE_LSHIFT, [&]() {
         if (dash_available && !dash_in_progress) {
             dash_in_progress = true;
             dash_speed = facing_right ? -30.0f : 30.0f;
