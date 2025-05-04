@@ -32,6 +32,7 @@ void bind_menu(){
 void bind_button(){
     myapp.bindMouseButton(SDL_BUTTON_LEFT, [&](){ 
         if (!game && button.onHover()){
+            printf("game start\n");
             game = true;
         }
         else if (pause && button_resume.onHover()) {

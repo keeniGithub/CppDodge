@@ -2,7 +2,7 @@
 #include <var.hpp>
 #include <physic.hpp>
 #include <check.hpp>
-#include <anim.hpp>
+#include <died.hpp>
 #include <bind.hpp>
 #include <save.hpp>
 #include <attack.hpp>
@@ -35,7 +35,11 @@ int main()
     texture t_scp(myapp.Render, path+"image/scope.png");
     texture t_rkt(myapp.Render, path+"image/rocket.png");
     texture t_ls(myapp.Render, path+"image/laser.png");
+    texture t_sw(myapp.Render, path+"image/saw.png");
     texture t_wrn(myapp.Render, path+"image/warning.png");
+    texture t_pp(myapp.Render, path+"image/pipe.png");
+    texture t_bl(myapp.Render, path+"image/blob.png");
+    texture t_sp(myapp.Render, path+"image/spiky.png");
 
     text t_ct(myapp.Render, "0", myapp.font);
     text t_mct(myapp.Render, "0", myapp.font, 158, 228, 255);
@@ -43,9 +47,11 @@ int main()
     while (!myapp.quit) {
         handleEvent(myapp);
 
-        if (!game){
+        myapp.fill(0, 0, 0);
+
+        if (!game) {
             reset();
-            myapp.fill(0, 0, 0);
+            
             menu_background.fillTexture(myapp.Render, &t_mbg);
             logo.fillTexture(myapp.Render, &t_lg);
             button.fillTexture(myapp.Render, button.onHover() ? &t_hvbtn : &t_btn);
@@ -53,13 +59,14 @@ int main()
         } else {
             scope.setFrect(player.getX()-25, player.getY()-25, player.getWidth()+50, player.getHeight()+50);
 
-            myapp.fill(0, 0, 0);
             background.fillTexture(myapp.Render, &t_bg);
             counter.fillText(myapp.Render, &t_ct);
             max_counter.fillText(myapp.Render, &t_mct);
             dash_state.fillTexture(myapp.Render, dash_available ? &t_ds : &t_nods);
+
+            if (!spiky_attack_avalible) spiky.fillTexture(myapp.Render, &t_sp);
+
             platform.fillTexture(myapp.Render, &t_pf);
-            lava.fillTexture(myapp.Render, &t_lv);
             button_pause.fillTexture(myapp.Render, &t_psbtn);
             player.fillTexture(myapp.Render, 
                 (die || (death_count % 10 == 0 && death_count != 0)) ? &t_dpl : &t_pl, 
@@ -67,17 +74,30 @@ int main()
                 facing_right ? SDL_FLIP_NONE : SDL_FLIP_HORIZONTAL, point_pl
             );
             rocket.fillTexture(myapp.Render, &t_rkt);
-            if (attack == "laser"){
+
+            if (!laser_attack_avalible) {
                 laser_left.fillTexture(myapp.Render, &t_ls);
                 laser_right.fillTexture(myapp.Render, &t_ls);
+            }
+
+            if (!rocket_attack_avalible && rocket_counter < 400) {
+                scope.fillTexture(myapp.Render, &t_scp, scp_degr, SDL_FLIP_NONE, point_scp);
+                rocket.setX(player.getX());
+            }
+
+            if (!saw_attack_avalible) {
+                saw_left.fillTexture(myapp.Render, &t_sw, saw_degr, SDL_FLIP_NONE, point_sw);
+                saw_right.fillTexture(myapp.Render, &t_sw, saw_degr*-1, SDL_FLIP_NONE, point_sw);
                 warning_left.fillTexture(myapp.Render, &t_wrn);
                 warning_right.fillTexture(myapp.Render, &t_wrn);
             }
 
-            if (attack == "rocket" && attack_counter < 400){
-                scope.fillTexture(myapp.Render, &t_scp, scp_degr, SDL_FLIP_NONE, point_scp);
-                rocket.setX(player.getX());
+            if (!pipe_attack_avalible) {
+                blob.fillTexture(myapp.Render, &t_bl, bl_degr, SDL_FLIP_NONE, point_bl);
+                pipe.fillTexture(myapp.Render, &t_pp);
             }
+
+            lava.fillTexture(myapp.Render, &t_lv);
 
             if (!pause){
                 if (moved_left) 
@@ -90,28 +110,8 @@ int main()
                 handle_jump();
                 handle_dash();
                 
-                anim_die();
+                handle_die();
                 
-                if (die) {
-                    laser_left.setX(x_pf + 10);
-                    laser_right.setX((x_pf + platform.getWidth() - laser_right.getWidth()) - 10);
-                    laser_left.setHeight(0);
-                    laser_right.setHeight(0);
-                }
-
-                if (
-                    player.onTouch(lava) 
-                    || check_border(player, myapp)
-                    || player.onTouch(rocket)
-                    || player.onTouch(laser_left)
-                    || player.onTouch(laser_right)
-                   ) 
-                    die = true;
-
-                cout<<"Player Y: "<<player.getY()<<endl;
-                cout<<"Platform Y: "<<platform.getY()<<endl;
-                cout<<"y_pf Y: "<<y_pf<<endl;
-
                 if (player.getY() > 400 && player.onTouch(platform)) 
                     player.setY(400);
 
@@ -127,6 +127,7 @@ int main()
                 t_mct.setText(max_count_str);
 
                 scp_degr += 6;
+                saw_degr += 12;
             } else {
                 pause_background.fillTexture(myapp.Render, &t_pbg);
                 button_resume.fillTexture(myapp.Render, button_resume.onHover() ? &t_hvrsbtn : &t_rsbtn);

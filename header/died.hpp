@@ -5,7 +5,22 @@
 #include <var.hpp>
 #include <game.hpp>
 
-void anim_die(){
+void handle_die(){
+    if (
+        player.onTouch(lava) 
+        || (noclip && (
+            check_border(player, myapp)
+            || player.onTouch(rocket)
+            || player.onTouch(laser_left)
+            || player.onTouch(laser_right)
+            || player.onTouch(saw_left)
+            || player.onTouch(saw_right)
+            || player.onTouch(blob)
+            || player.onTouch(spiky)
+        ))
+       ) 
+        die = true;
+
     if (die) {
         playanim = true;
 
