@@ -42,8 +42,9 @@ void reset(){
     saw_counter = 0;
     pipe_counter = 0;
     spiky_counter = 0;
+    active_attacks = 0;
     player.setPosition(x_pl, y_pl);
-    rocket.setX(x_rkt);
+    rocket.setPosition(x_rkt, -100);
     laser_left.setX(x_pf + 10);
     laser_right.setX((x_pf + platform.getWidth() - laser_right.getWidth()) - 10);
     laser_left.setHeight(0);

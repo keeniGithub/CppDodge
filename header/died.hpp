@@ -8,16 +8,14 @@
 void handle_die(){
     if (
         player.onTouch(lava) 
-        || (noclip && (
-            check_border(player, myapp)
-            || player.onTouch(rocket)
-            || player.onTouch(laser_left)
-            || player.onTouch(laser_right)
-            || player.onTouch(saw_left)
-            || player.onTouch(saw_right)
-            || player.onTouch(blob)
-            || player.onTouch(spiky)
-        ))
+        || check_border(player, myapp)
+        || player.onTouch(rocket)
+        || player.onTouch(laser_left)
+        || player.onTouch(laser_right)
+        || player.onTouch(saw_left)
+        || player.onTouch(saw_right)
+        || player.onTouch(blob)
+        || player.onTouch(spiky)
        ) 
         die = true;
 
@@ -28,7 +26,7 @@ void handle_die(){
 
         if (anim_y < 100) {
             anim_y += 10;
-            player.subY(20);
+            player.subY(17);
         } if (anim_y == 100 && anim_y_back != 100) {
             anim_y_back += 5;
             player.addY(5);

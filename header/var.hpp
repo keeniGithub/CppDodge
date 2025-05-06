@@ -8,8 +8,6 @@
 
 using namespace std;
 
-const bool noclip = true;
-
 app myapp;
 
 string path = disk_path()+"\\";
@@ -154,6 +152,7 @@ bool saw_attack_avalible = true;
 bool pipe_attack_avalible = true;
 bool spiky_attack_avalible = true;
 
+int active_attacks = 0;
 int attack_timer = 0;
 int attack_elapsed = 0;
 int rocket_counter = 0;

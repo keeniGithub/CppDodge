@@ -13,6 +13,7 @@ void attack_rocket() {
     } else {
         rocket_counter = 0;
         rocket_attack_avalible = true;
+        active_attacks--;
     }
 }
 
@@ -75,6 +76,7 @@ void attack_laser() {
         laser_right.subX(20);
         laser_left.setSize(0, 0);
         laser_right.setSize(0, 0);
+        active_attacks--;
     }
 }
 
@@ -116,6 +118,7 @@ void attack_saw() {
         saw_attack_avalible = true;
         saw_left.setY(y_sw);
         saw_right.setY(y_sw);
+        active_attacks--;
     }
 }
 
@@ -144,6 +147,7 @@ void attack_pipe() {
         pipe.setPosition(x_pp, -150);
         blob.setPosition(x_bl, -36);
         bl_degr = 0;
+        active_attacks--;
     }
 }
 
@@ -162,6 +166,7 @@ void attack_spiky() {
         spiky_attack_avalible = true;
         spiky.setY(-170);
         x_sp = 0;
+        active_attacks--;
     }
 }
 
@@ -181,31 +186,33 @@ void random_attack() {
     attack_elapsed++;
     if (attack_elapsed >= attack_timer * 20) {
         int random_attack = rand() % 5;
-        if (random_attack == 0 && rocket_attack_avalible) {
-            rocket.setPosition(x_rkt, -100);
-            rocket_attack_avalible = false;
-            cout << "attack rocket" << endl;
-        } else if (random_attack == 1 && laser_attack_avalible) {
-            laser_right.subX(20);
-            laser_attack_avalible = false;
-            cout << "attack laser" << endl;
-        } else if (random_attack == 2 && saw_attack_avalible) {
-            saw_attack_avalible = false;
-            cout << "attack saw" << endl;
-        } else if (random_attack == 3 && pipe_attack_avalible) {
-            pipe_attack_avalible = false;
-            cout << "attack pipe" << endl;
-        } else if (random_attack == 4 && spiky_attack_avalible) {
-            if (x_sp == 0) {
-                x_sp = rand() % (myapp.window.width - 2 * x_pf) + x_pf;
-                spiky.setX(x_sp);
+        if (active_attacks < 2){
+            if (random_attack == 0 && rocket_attack_avalible) {
+                rocket.setPosition(x_rkt, -100);
+                rocket_attack_avalible = false;
+                active_attacks++;
+            } else if (random_attack == 1 && laser_attack_avalible) {
+                laser_right.subX(20);
+                laser_attack_avalible = false;
+                active_attacks++;
+            } else if (random_attack == 2 && saw_attack_avalible) {
+                saw_attack_avalible = false;
+                active_attacks++;
+            } else if (random_attack == 3 && pipe_attack_avalible) {
+                pipe_attack_avalible = false;
+                active_attacks++;
+            } else if (random_attack == 4 && spiky_attack_avalible) {
+                if (x_sp == 0) {
+                    x_sp = rand() % (myapp.window.width - 2 * x_pf) + x_pf;
+                    spiky.setX(x_sp);
+                }
+                spiky_attack_avalible = false;
+                active_attacks++;
             }
-            spiky_attack_avalible = false;
-            cout << "attack spiky" << endl;
-        }
 
-        attack_elapsed = 0;
-        attack_timer = rand() % 12 + 5;
+            attack_elapsed = 0;
+            attack_timer = rand() % 12 + 5;
+        }
     }
 }
 

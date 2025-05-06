@@ -109,7 +109,6 @@ int main()
 
                 handle_jump();
                 handle_dash();
-                
                 handle_die();
                 
                 if (player.getY() > 400 && player.onTouch(platform)) 
